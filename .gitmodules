@@ -1,0 +1,3 @@
+[submodule "lib/youtube"]
+	path = lib/youtube
+	url = https://github.com/NFicano/python-youtube-download.git
