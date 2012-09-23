@@ -18,7 +18,10 @@ def get_page(url):
     h = httplib2.Http('.cache')
     resp, content = h.request(url, 'GET', headers=headers)
 
-    return content
+    if resp['status'] == '200':
+        return content
+    else:
+        return None
 
 def get_youtube_links(data):
     """Return a list of Youtube links
@@ -57,8 +60,11 @@ if __name__ == '__main__':
     for subreddit in config.SUBREDDITS:
         url = 'http://www.reddit.com/r/{0}/.json?limit={1}'.format(subreddit,
                                                                    config.LIMIT)
-        html = get_page(url)
-        links = get_youtube_links(html)
+        data = get_page(url)
+        if not data:
+            print "Can't find Subreddit "+subreddit
+            continue
+        links = get_youtube_links(data)
         for link in links:
             yt = YouTube()
             yt.url = link
