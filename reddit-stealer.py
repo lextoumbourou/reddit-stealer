@@ -29,11 +29,16 @@ def get_youtube_links(data):
 
     return output
 
+def convert_to_audio(video_path):
+    """Call avconv to perform the video conversion"""
+    cmd = ['avconv', '-i', download_path,
+           config.FINISH_PATH+'/'+yt.filename+'.wav']
+    subprocess.call(cmd)
+
 if __name__ == '__main__':
     # Check if the directories exist as per the config
     if not os.path.exists(config.FINISH_PATH):
         os.makedirs(config.FINISH_PATH)
-
     if not os.path.exists(config.TMP_PATH):
         os.makedirs(config.TMP_PATH)
         
@@ -52,10 +57,6 @@ if __name__ == '__main__':
                 if not os.path.isfile(download_path):
                     video.download(path=config.TMP_PATH)
                     if os.path.isfile(download_path):
-                        cmd = ['avconv', 
-                               '-i',
-                               download_path,
-                               config.FINISH_PATH+yt.filename+'.wav']
-                        subprocess.call(cmd)
+                        convert_to_audio(download_path)
                 else:
                     print "Already got ", yt.filename
