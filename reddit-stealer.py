@@ -1,16 +1,18 @@
-import httplib2
-import os
-from lib.youtube.youtube import YouTube
-from sys import exit, argv
-import json
-import config
-import subprocess
 """ 
 Reddit Video Stealer
 
 Download every Youtube video in a subreddit then rip the audio
-
 """
+import os
+from sys import exit, argv
+import subprocess
+
+import httplib2
+import json
+
+from lib.youtube.youtube import YouTube
+import config
+
 def get_page(url):
     """Return html content (a simple wrapper for httplib2)"""
     output = []
