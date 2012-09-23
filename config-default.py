@@ -1,7 +1,7 @@
-# Temporary path for video files
+# Temporary path for video files (without ending slash)
 TMP_PATH = "/tmp"
 
-# Path to ripped wavs
+# Path to ripped wavs (without ending slash)
 FINISH_PATH = "~/RippedWavs"
 
 # A tuple of Subreddits from which to download Youtube videos from
