@@ -1,3 +1,25 @@
-# Reddit Stealer
+Reddit Stealer
+=============
 
-Collect the audio from videos listed in Reddit.
+Download every video in Subreddits and convert to audio.
+
+Usage
+-----
+
+* Create a *config.py* file
+
+```bash
+cp config-default.py config.py
+```
+
+* Config *config.py* to your liking
+
+```bash
+vi config.py
+```
+
+* Run!
+
+```bash
+python reddit-stealer.py
+```
