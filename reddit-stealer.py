@@ -12,6 +12,7 @@ Download every Youtube video in a subreddit then rip the audio
 
 """
 def get_page(url):
+    """Return html content (a simple wrapper for httplib2)"""
     output = []
     headers = {'User-Agent':'audio collector bot by /u/WalkThePlank'}
     h = httplib2.Http('.cache')
@@ -20,6 +21,12 @@ def get_page(url):
     return content
 
 def get_youtube_links(data):
+    """Return a list of Youtube links
+
+    Arguments:
+    data -- Json data for a Subreddit
+
+    """
     output = []
     json_data = json.loads(data)
     for j in json_data['data']['children']:
@@ -29,10 +36,15 @@ def get_youtube_links(data):
 
     return output
 
-def convert_to_audio(video_path):
-    """Call avconv to perform the video conversion"""
-    cmd = ['avconv', '-i', download_path,
-           config.FINISH_PATH+'/'+yt.filename+'.wav']
+def convert_to_audio(infile):
+    """Call avconv to perform the video conversion
+
+    Arguments:
+    infile -- an absolute path to a video file
+
+    """
+    outfile = config.FINISH_PATH+'/'+yt.filename+'.wav'
+    cmd = ['avconv', '-i', infile, outfile]
     subprocess.call(cmd)
 
 if __name__ == '__main__':
@@ -45,7 +57,8 @@ if __name__ == '__main__':
     for subreddit in config.SUBREDDITS:
         url = 'http://www.reddit.com/r/{0}/.json?limit={1}'.format(subreddit,
                                                                    config.LIMIT)
-        links = get_youtube_links(get_page(url))
+        html = get_page(url)
+        links = get_youtube_links(html)
         for link in links:
             yt = YouTube()
             yt.url = link
