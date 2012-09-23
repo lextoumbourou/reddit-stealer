@@ -70,6 +70,9 @@ if __name__ == '__main__':
                 if not os.path.isfile(download_path):
                     video.download(path=config.TMP_PATH)
                     if os.path.isfile(download_path):
+                        # Convert the video file to audio
                         convert_to_audio(download_path)
+                        # Remove the video file
+                        os.remove(download_path)
                 else:
                     print "Already got ", yt.filename
