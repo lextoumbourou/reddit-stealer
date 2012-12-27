@@ -1,20 +1,47 @@
-import httplib2
 import os
-from lib.youtube.youtube import YouTube
-from sys import exit, argv
-import json
-import config
 import subprocess
+import json
+import sys
+import argparse
+import urllib2
+
+import httplib2
+from pytube import YouTube
 """ 
 Reddit Video Stealer
 
-Download every Youtube video in a subreddit then rip the audio
+Download every YouTube video in a subreddit at the highest 
+possible quality, and, optionally rip the audio.
 
 """
+USER_AGENT = 'reddit-stealer.py by /u/WalkThePlank'
+
+def get_args():
+    parser = argparse.ArgumentParser(
+            description="Download every video in a subreddit")
+    parser.add_argument(
+            'subreddits', type=str, nargs='+', 
+            help='Subreddits to steal from')
+    parser.add_argument(
+            '-l', '--limit', type=int, default=50,
+            help='Limit amount of videos downloadable per Subreddit')
+    parser.add_argument(
+            '-o', '--output_dir', type=str, default='./',
+            help='Specify output directory (defaults to current directory)')
+    parser.add_argument(
+            '-a', '--audio', action='store_true',
+            help='Specify output directory (defaults to current directory)')
+
+
+    args = parser.parse_args()
+    return args
+
 def get_page(url):
-    """Return html content (a simple wrapper for httplib2)"""
+    """
+    Return html content (a simple wrapper for httplib2)
+    """
     output = []
-    headers = {'User-Agent':'audio collector bot by /u/WalkThePlank'}
+    headers = {'User-Agent':USER_AGENT}
     h = httplib2.Http('.cache')
     resp, content = h.request(url, 'GET', headers=headers)
 
@@ -24,61 +51,89 @@ def get_page(url):
         return None
 
 def get_youtube_links(data):
-    """Return a list of Youtube links
+    """
+    Return a list of YouTube links
 
     Arguments:
     data -- Json data for a Subreddit
-
     """
     output = []
     json_data = json.loads(data)
     for j in json_data['data']['children']:
         link = j['data']['url']
-        if 'youtube.com' in link:
+        if 'youtube.com' in link and not 'playlist' in link:
             output.append(link)
 
     return output
 
-def convert_to_audio(infile):
-    """Call avconv to perform the video conversion
+def convert_to_audio(infile, path):
+    """
+    Call avconv to perform the video conversion
 
     Arguments:
     infile -- an absolute path to a video file
-
     """
-    outfile = config.FINISH_PATH+'/'+yt.filename+'.wav'
+    outfile = '{0}/{1}.wav'.format(path, yt.filename)
     cmd = ['avconv', '-i', infile, outfile]
     subprocess.call(cmd)
 
-if __name__ == '__main__':
-    # Check if the directories exist as per the config
-    if not os.path.exists(config.FINISH_PATH):
-        os.makedirs(config.FINISH_PATH)
-    if not os.path.exists(config.TMP_PATH):
-        os.makedirs(config.TMP_PATH)
-        
-    for subreddit in config.SUBREDDITS:
+class ExtendedYouTube(YouTube):
+    """
+    ExtendedYoutube adds just the get_highest_quality method to the pytube.Youtube library
+    """
+    def get_highest_quality(self, extension_pref='mp4'):
+        """
+        Take a Youtube instance as input and return the highest available quality
+        """
+        highest = 0
+        preferred_ext = 'mp4'
+        result = None
+        for v in self.videos:
+            current = int(v.resolution[:-1])
+            if (current > highest) or \
+               (current == highest and v.extension == extension_pref):
+                highest = current
+                result = v
+
+        return result
+
+def main():
+    """
+    Main program body
+    """
+    args = get_args()
+    for subreddit in args.subreddits:
         url = 'http://www.reddit.com/r/{0}/.json?limit={1}'.format(subreddit,
-                                                                   config.LIMIT)
+                                                                   args.limit)
         data = get_page(url)
         if not data:
-            print "Can't find Subreddit "+subreddit
+            print "Can't find Subreddit {0} ".format(subreddit)
             continue
         links = get_youtube_links(data)
         for link in links:
-            yt = YouTube()
+            yt = ExtendedYouTube()
             yt.url = link
             video = yt.get_highest_quality()
-            if video:
-                download_path = "{0}/{1}.{2}".format(config.TMP_PATH,
-                                                      yt.filename,
-                                                      video.extension)
-                if not os.path.isfile(download_path):
-                    video.download(path=config.TMP_PATH)
-                    if os.path.isfile(download_path):
-                        # Convert the video file to audio
-                        convert_to_audio(download_path)
-                        # Remove the video file
-                        os.remove(download_path)
-                else:
-                    print "Already got ", yt.filename
+            if not video:
+                continue
+            download_path = '{0}/{1}.{2}'.format(
+                    args.output_dir,
+                    yt.filename,
+                    video.extension)
+            if not os.path.isfile(download_path):
+                try:
+                    video.download(path=args.output_dir)
+                except Exception, e:
+                    print "Failed to download {0} due to: {1}".format(
+                            yt.filename,
+                            e)
+                    continue
+                if os.path.isfile(download_path) and args.audio:
+                    # Convert the video file to audio
+                    convert_to_audio(download_path)
+                    
+            else:
+                print "Already got {0}".format(yt.filename)
+
+if __name__ == '__main__':
+    main()
