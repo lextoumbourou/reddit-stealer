@@ -31,8 +31,6 @@ def get_args():
     parser.add_argument(
             '-a', '--audio', action='store_true',
             help='Specify output directory (defaults to current directory)')
-
-
     args = parser.parse_args()
     return args
 
