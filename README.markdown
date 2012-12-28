@@ -15,10 +15,9 @@ optional arguments:
   -l LIMIT, --limit LIMIT
                         Limit amount of videos downloadable per Subreddit
   -o OUTPUT_DIR, --output_dir OUTPUT_DIR
-                        Specify output directory (defaults to current
+                        Output directory (defaults to current
                         directory)
-  -a, --audio           Specify output directory (defaults to current
-                        directory)
+  -a, --audio           Rip to audio when complete
 ```
 
 * Run!
