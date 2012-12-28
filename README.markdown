@@ -1,7 +1,7 @@
 Reddit Stealer
 =============
 
-Download every video in Subreddits and convert to audio.
+A small script to download all recent videos in Subreddits and convert to audio.
 
 Options
 -----
@@ -20,9 +20,9 @@ optional arguments:
   -a, --audio           Rip to audio when complete
 ```
 
-* Run!
+Examples
+--------
 
 ```bash
-python reddit-stealer.py [-h] [-l LIMIT] [-o OUTPUT_DIR] [-a]
-                         subreddits [subreddits ...]
+python reddit-stealer.py exploitation ObscureMedia
 ```
