@@ -3,23 +3,27 @@ Reddit Stealer
 
 Download every video in Subreddits and convert to audio.
 
-Usage
+Options
 -----
 
-* Create a *config.py* file
-
-```bash
-cp config-default.py config.py
 ```
+positional arguments:
+  subreddits            Subreddits to steal from
 
-* Config *config.py* to your liking
-
-```bash
-vi config.py
+optional arguments:
+  -h, --help            show this help message and exit
+  -l LIMIT, --limit LIMIT
+                        Limit amount of videos downloadable per Subreddit
+  -o OUTPUT_DIR, --output_dir OUTPUT_DIR
+                        Specify output directory (defaults to current
+                        directory)
+  -a, --audio           Specify output directory (defaults to current
+                        directory)
 ```
 
 * Run!
 
 ```bash
-python reddit-stealer.py
+python reddit-stealer.py [-h] [-l LIMIT] [-o OUTPUT_DIR] [-a]
+                         subreddits [subreddits ...]
 ```
