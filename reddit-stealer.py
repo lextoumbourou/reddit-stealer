@@ -1,13 +1,14 @@
-#!/usr/bin/env/ python
+#!/usr/bin/env python
 import os
 import subprocess
 import json
 import sys
 import argparse
 import urllib2
+import random
 
 import httplib2
-from pytube import YouTube
+import pytube
 import sh
 """
 Reddit Video Stealer
@@ -32,8 +33,11 @@ def get_args():
         '-o', '--output_dir', type=str, default='./',
         help='Specify output directory (defaults to current directory)')
     parser.add_argument(
+        '-s', '--shuffle', action='store_true',
+        help='Shuffle order of collected links for download')
+    parser.add_argument(
         '-a', '--audio', action='store_true',
-        help='Additionally, rip a .wav file when done?')
+        help='RIP to wave when done')
     parser.add_argument(
         '-f', '--force', action='store_true',
         help='Force download even if file already exists in collection')
@@ -94,7 +98,7 @@ def convert_to_audio(infile, outpath=None):
     subprocess.call(cmd)
 
 
-class ExtendedYouTube(YouTube):
+class ExtendedYouTube(pytube.YouTube):
     """
     ExtendedYoutube adds get_highest_quality() to the pytube.Youtube library
     """
@@ -116,42 +120,63 @@ class ExtendedYouTube(YouTube):
         return result
 
 
-def main():
+def get_all_links(subreddits, limit, shuffle):
     """
-    Main program body
+    Get all links from each subreddit and
+    optionally unsort them
     """
-    args = get_args()
-    for subreddit in args.subreddits:
+    output = []
+    for subreddit in subreddits:
         url = 'http://www.reddit.com/r/{0}/.json?limit={1}'.format(subreddit,
-                                                                   args.limit)
+                                                                   limit)
         data = get_page(url)
         if not data:
             print "Can't find Subreddit {0} ".format(subreddit)
             continue
         links = get_youtube_links(data)
-        for link in links:
-            yt = ExtendedYouTube()
+        output += links
+
+    if shuffle:
+        random.shuffle(output)
+
+    return output
+
+
+def main():
+    """
+    Main program body where we iterate over all the collected links
+    and download them and optional convert to audio
+    """
+    args = get_args()
+    links = get_all_links(args.subreddits,
+                          args.limit,
+                          args.shuffle)
+    for link in links:
+        yt = ExtendedYouTube()
+        try:
             yt.url = link
-            video = yt.get_highest_quality()
-            if not video:
+        except pytube.YouTubeError, e:
+            print "YouTube error: ", e
+        video = yt.get_highest_quality()
+        if not video:
+            continue
+        download_path = '{0}/{1}.{2}'.format(
+            args.output_dir,
+            yt.filename,
+            video.extension)
+        if args.force or not os.path.isfile(download_path):
+            try:
+                video.download(path=args.output_dir)
+            except Exception, e:
+                print "Failed to download {0} due to: {1}".format(
+                    yt.filename,
+                    e)
                 continue
-            download_path = '{0}/{1}.{2}'.format(
-                args.output_dir,
-                yt.filename,
-                video.extension)
-            if args.force or not os.path.isfile(download_path):
-                try:
-                    video.download(path=args.output_dir)
-                except Exception, e:
-                    print "Failed to download {0} due to: {1}".format(
-                        yt.filename,
-                        e)
-                    continue
-                if os.path.isfile(download_path) and args.audio:
-                    # Convert the video file to audio
-                    convert_to_audio(download_path)
-            else:
-                print "Already got {0}".format(yt.filename)
+            if os.path.isfile(download_path) and args.audio:
+                # Convert the video file to audio
+                convert_to_audio(download_path)
+        else:
+            print "Already got {0}".format(yt.filename)
 
 if __name__ == '__main__':
     main()
